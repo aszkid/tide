@@ -60,6 +60,5 @@ fn list(i: &[u8]) -> IResult<&[u8], Value> {
 	let (rest, val) = try_parse!(i,
 		delimited!(char!('l'), many1!(decode), char!('e'))
 	);
-	println!("list length: {}", val.len());
 	IResult::Done(rest, Value::List(val))
 }
