@@ -52,6 +52,28 @@ pub fn decode(src: &[u8]) -> IResult<&[u8], Value> {
 	value(src)
 }
 
+// Just for debugging purposes
+pub fn print_val(val: &Value) {
+	match *val {
+		Value::Integer(ref v) => println!("Integer: {}", v),
+		Value::String(ref v) => println!("String: {}", String::from_utf8(v.clone()).unwrap()),
+		Value::List(ref v) => {
+			println!("Hello list!");
+			for ele in v {
+				print_val(ele);
+			}
+			println!("Goodbye list!");
+		},
+		Value::Dictionary(ref v) => {
+			println!("Hello dictionary!");
+			for (key, val) in v {
+				println!("Key: {}", String::from_utf8(key.clone()).unwrap());
+				print_val(val);
+			}
+			println!("Goodbye dictionary!");
+		}
+	}
+}
 
 // Specific parsing functions
 fn value(i: &[u8]) -> IResult<&[u8], Value> {
