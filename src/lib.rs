@@ -5,3 +5,4 @@ use mio::*;
 extern crate nom;
 
 pub mod bencode;
+pub mod meta;
