@@ -2,6 +2,7 @@ extern crate nom;
 
 use std::str;
 use std::collections::BTreeMap;
+use std::mem;
 
 pub use nom::IResult;
 
@@ -13,10 +14,10 @@ pub enum Value {
 	Dictionary(BTreeMap<Vec<u8>, Value>)
 }
 pub trait Encodable {
-	fn encode(&self) -> Result<String, &str>;
+	fn encode(&self) -> Result<Vec<u8>, &str>;
 }
-impl Encodable for Value {
-	fn encode(&self) -> Result<String, &str> {
+/*impl Encodable for Value {
+	fn encode(&self) -> Result<Vec<u8>, &str> {
 		match *self {
 			Value::String(ref s) => Ok(encode_str(s)),
 			Value::Integer(i) => Ok(encode_int(i)),
@@ -25,28 +26,40 @@ impl Encodable for Value {
 		}
 	}
 }
-fn encode_str(s: &Vec<u8>) -> String {
-	format!("{}:{}", s.len(), String::from_utf8(s.clone()).unwrap())
+fn encode_str(s: &Vec<u8>) -> Vec<u8> {
+	let mut res: Vec<u8> = Vec::new(); //format!("{}:{}", s.len(), s)
+	res.push(mem::transmute(s.len()));
+	res.push(mem::transmute(':'));
+	res.append(&mut s.clone());
+	res
 }
-fn encode_int(i: i64) -> String {
-	format!("i{}e", i.to_string())
+fn encode_int(i: i64) -> Vec<u8> {
+	let mut res: Vec<u8> = Vec::new(); //format!("{}:{}", s.len(), s)
+	res.push(mem::transmute('i'));
+	res.append(mem::transmute(i));
+	res.push(mem::transmute('e'));
+	res
 }
-fn encode_list(l: &Vec<Value>) -> String {
-	let mut list = String::new();
+fn encode_list(l: &Vec<Value>) -> Vec<u8> {
+	let mut res: Vec<u8> = Vec::new();
+	res.push(mem::transmute('l'));
 	for ele in l {
-		list.push_str(ele.encode().unwrap().as_str());
+		res.append(mem::transmute(ele.encode().unwrap()));
 	}
-	format!("l{}e", list)
+	res.push(mem::transmute('e'));
+	res
 }
-fn encode_dict(d: &BTreeMap<Vec<u8>, Value>) -> String {
-	let mut dict = String::new();
+fn encode_dict(d: &BTreeMap<Vec<u8>, Value>) -> Vec<u8> {
+	let mut res: Vec<u8> = Vec::new();
+	res.push(mem::transmute('d'));
 	for (k,v) in d {
 		let ks = Value::String(k.clone());
-		dict.push_str(ks.encode().unwrap().as_str());
-		dict.push_str(v.encode().unwrap().as_str());
+		res.append(mem::transmute(ks.encode().unwrap()));
+		res.append(mem::transmute(v.encode().unwrap()));
 	}
-	format!("d{}e", dict)
-}
+	res.push(mem::transmute('e'));
+	res
+}*/
 
 pub fn decode(src: &[u8]) -> IResult<&[u8], Value> {
 	value(src)
@@ -241,7 +254,7 @@ mod tests {
 		)
 	}
 
-	// ENCODING TESTS
+	/*// ENCODING TESTS
 	#[test]
 	fn encode_1() {
 		let mut enc = BTreeMap::new();
@@ -256,6 +269,6 @@ mod tests {
 			IResult::Incomplete(_) => panic!("Incomplete data!"),
 			IResult::Error(_) => panic!("Not good!")
 		}
-	}
+	}*/
 
 }
