@@ -15,11 +15,11 @@ pub struct file {
 
 #[derive(PartialEq, Debug)]
 pub struct torrent {
-	announce: String,    // tracker url
-	name: String,        // file (single) or directory (multi)
-	piece_length: i64,   //
-	pieces: Vec<Vec<u8>>, //
-	files: Vec<file>,    //
+	announce: String,     // tracker url
+	name: String,         // file (single) or directory (multi)
+	piece_length: i64,    //
+	pieces: Vec<Vec<u8>>, // byte-string SHA1 hashes of the pieces
+	files: Vec<file>,     // files in the torrent
 }
 
 #[derive(Debug)]
@@ -208,6 +208,22 @@ impl torrent {
 	/*fn load_from_magnet(url: String) -> Result<info, MetaError> {
 
 	}*/
+
+	/*pub fn infohash(&self) {
+
+	}*/
+
+	// for debugging
+	pub fn print_info(&self) {
+		println!("Name:       {}", self.name);
+		println!("Announce:   {}", self.announce);
+		println!("Piece len.: {}", self.piece_length);
+		println!("No. pieces: {}", self.pieces.len());
+		println!("Files -----");
+		for f in &self.files {
+			println!("--> {}, {}", f.path.concat(), f.length);
+		}
+	}
 }
 
 // some helper functions
@@ -219,9 +235,7 @@ fn split_pieces(raw: &Vec<u8>, to: &mut Vec<Vec<u8>>) -> Result<(), MetaError> {
 		return Err(MetaError::PiecesNotMul20);
 	}
 	while iter.peek() != None {
-		to.push(
-			iter.by_ref().take(20).collect()
-		);
+		to.push(iter.by_ref().take(20).collect());
 	}
 
 	Ok(())
