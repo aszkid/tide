@@ -1,6 +1,3 @@
-extern crate mio;
-use mio::*;
-
 #[macro_use]
 extern crate nom;
 

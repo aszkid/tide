@@ -7,16 +7,18 @@ use std::error::Error;
 use std::str;
 use std::collections::BTreeMap;
 
+#[derive(PartialEq, Debug)]
 pub struct file {
 	length: i64,       // length of file in bytes
 	path: Vec<String>, // subdirectory names + file name
 }
 
+#[derive(PartialEq, Debug)]
 pub struct torrent {
 	announce: String,    // tracker url
 	name: String,        // file (single) or directory (multi)
 	piece_length: i64,   //
-	pieces: Vec<String>, //
+	pieces: Vec<Vec<u8>>, //
 	files: Vec<file>,    //
 }
 
@@ -152,9 +154,9 @@ impl torrent {
 		};
 
 		// 'length' and 'files' are mutually exclusive
-		// single-file case
 		match torr_info.get(&b"length".to_vec()) {
 			Some(len) => {
+				// single-file case
 				if torr_info.contains_key(&b"files".to_vec()) {
 					return Err(MetaError::HasLenAndFiles)
 				}
@@ -175,6 +177,7 @@ impl torrent {
 				});
 			},
 			None => {
+				// multi-file case
 				let torr_files = match torr_info.get(&b"files".to_vec()) {
 					Some(files) => {
 						match *files {
@@ -208,7 +211,7 @@ impl torrent {
 }
 
 // some helper functions
-fn split_pieces(raw: &Vec<u8>, to: &mut Vec<String>) -> Result<(), MetaError> {
+fn split_pieces(raw: &Vec<u8>, to: &mut Vec<Vec<u8>>) -> Result<(), MetaError> {
 	let len = raw.len();
 	let mut iter = raw.iter().cloned().peekable();
 
@@ -216,9 +219,9 @@ fn split_pieces(raw: &Vec<u8>, to: &mut Vec<String>) -> Result<(), MetaError> {
 		return Err(MetaError::PiecesNotMul20);
 	}
 	while iter.peek() != None {
-		to.push(String::from_utf8(
+		to.push(
 			iter.by_ref().take(20).collect()
-		).unwrap());
+		);
 	}
 
 	Ok(())
@@ -288,10 +291,14 @@ mod tests {
 
 	#[test]
 	fn open_1() {
-		let path = Path::new("./resources/ubuntu-16.04.1-desktop-amd64.iso.torrent");
+		let path = Path::new("./resources/sample.torrent");
 		let torr = match torrent::load_from_path(&path) {
 			Ok(torr) => torr,
 			Err(why) => panic!("Couldn't load torrent file: {:?}", why)
 		};
+		assert_eq!("sample.txt".to_owned(), torr.name);
+		assert_eq!("udp://tracker.openbittorrent.com:80".to_owned(), torr.announce);
+		assert_eq!(65536, torr.piece_length);
+		assert_eq!(vec![file {length: 20, path: vec!["sample.txt".to_owned()]}], torr.files);
 	}
 }
