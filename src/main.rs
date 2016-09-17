@@ -1,5 +1,6 @@
 extern crate tide;
 use tide::meta;
+use tide::bencode::Encodable;
 
 use std::path::Path;
 
@@ -10,4 +11,8 @@ fn main() {
 		Err(why) => panic!("Couldn't load torrent file: {:?}", why)
 	};
 	torr.print_info();
+
+	let v = tide::bencode::Value::Integer(-546);
+	let venc = v.encode().unwrap();
+	println!("hello: {}", String::from_utf8(venc).unwrap());
 }

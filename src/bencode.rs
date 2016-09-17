@@ -1,8 +1,11 @@
 extern crate nom;
+extern crate byteorder;
 
 use std::str;
 use std::collections::BTreeMap;
 use std::mem;
+
+use byteorder::{NativeEndian, WriteBytesExt};
 
 pub use nom::IResult;
 
@@ -16,7 +19,7 @@ pub enum Value {
 pub trait Encodable {
 	fn encode(&self) -> Result<Vec<u8>, &str>;
 }
-/*impl Encodable for Value {
+impl Encodable for Value {
 	fn encode(&self) -> Result<Vec<u8>, &str> {
 		match *self {
 			Value::String(ref s) => Ok(encode_str(s)),
@@ -27,39 +30,42 @@ pub trait Encodable {
 	}
 }
 fn encode_str(s: &Vec<u8>) -> Vec<u8> {
-	let mut res: Vec<u8> = Vec::new(); //format!("{}:{}", s.len(), s)
+	/*let mut res: Vec<u8> = Vec::new(); //format!("{}:{}", s.len(), s)
 	res.push(mem::transmute(s.len()));
 	res.push(mem::transmute(':'));
 	res.append(&mut s.clone());
+	res*/
+	let mut res: Vec<u8> = Vec::new();
+	res.push(':' as u8);
+	res.extend_from_slice(s.as_slice());
 	res
 }
 fn encode_int(i: i64) -> Vec<u8> {
-	let mut res: Vec<u8> = Vec::new(); //format!("{}:{}", s.len(), s)
-	res.push(mem::transmute('i'));
-	res.append(mem::transmute(i));
-	res.push(mem::transmute('e'));
+	let mut res: Vec<u8> = Vec::new();
+	res.push('i' as u8);
+	res.write_i64::<NativeEndian>(i);
+	res.push('e' as u8);
 	res
 }
 fn encode_list(l: &Vec<Value>) -> Vec<u8> {
 	let mut res: Vec<u8> = Vec::new();
-	res.push(mem::transmute('l'));
+	res.push('l' as u8);
 	for ele in l {
-		res.append(mem::transmute(ele.encode().unwrap()));
+		res.extend_from_slice(&ele.encode().unwrap().as_slice());
 	}
-	res.push(mem::transmute('e'));
+	res.push('e' as u8);
 	res
 }
 fn encode_dict(d: &BTreeMap<Vec<u8>, Value>) -> Vec<u8> {
 	let mut res: Vec<u8> = Vec::new();
-	res.push(mem::transmute('d'));
+	res.push('d' as u8);
 	for (k,v) in d {
-		let ks = Value::String(k.clone());
-		res.append(mem::transmute(ks.encode().unwrap()));
-		res.append(mem::transmute(v.encode().unwrap()));
+		res.extend_from_slice(k.as_slice());
+		res.extend_from_slice(v.encode().unwrap().as_slice());
 	}
-	res.push(mem::transmute('e'));
+	res.push('e' as u8);
 	res
-}*/
+}
 
 pub fn decode(src: &[u8]) -> IResult<&[u8], Value> {
 	value(src)
@@ -254,21 +260,22 @@ mod tests {
 		)
 	}
 
-	/*// ENCODING TESTS
+	// ENCODING TESTS
 	#[test]
 	fn encode_1() {
-		let mut enc = BTreeMap::new();
+		/*let mut enc = BTreeMap::new();
 		enc.insert(b"foo".to_vec(), Value::Integer(-546));
 		enc.insert(b"baroo".to_vec(), Value::List(vec![Value::String(b"nopee".to_vec()), Value::Integer(84954)]));
-		let encv = Value::Dictionary(enc);
+		let encv = Value::Dictionary(enc);*/
+		let encv = Value::Integer(-546);
 
 		let encs = encv.encode().unwrap();
-		let dec = decode(encs.as_bytes());
+		let dec = decode(encs.as_slice());
 		match dec {
 			IResult::Done(_, val) => assert_eq!(val, encv),
 			IResult::Incomplete(_) => panic!("Incomplete data!"),
 			IResult::Error(_) => panic!("Not good!")
 		}
-	}*/
+	}
 
 }

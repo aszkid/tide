@@ -7,6 +7,9 @@ use std::error::Error;
 use std::str;
 use std::collections::BTreeMap;
 
+use crypto::digest::Digest;
+use crypto::sha1::Sha1;
+
 #[derive(PartialEq, Debug)]
 pub struct file {
 	length: i64,       // length of file in bytes
@@ -209,10 +212,6 @@ impl torrent {
 
 	}*/
 
-	/*pub fn infohash(&self) {
-
-	}*/
-
 	// for debugging
 	pub fn print_info(&self) {
 		println!("Name:       {}", self.name);
@@ -224,6 +223,12 @@ impl torrent {
 			println!("--> {}, {}", f.path.concat(), f.length);
 		}
 	}
+}
+pub fn infohash() -> String {
+	let mut hasher = Sha1::new();
+	hasher.input_str("hello world");
+	let hex = hasher.result_str();
+	hex
 }
 
 // some helper functions
@@ -314,5 +319,13 @@ mod tests {
 		assert_eq!("udp://tracker.openbittorrent.com:80".to_owned(), torr.announce);
 		assert_eq!(65536, torr.piece_length);
 		assert_eq!(vec![file {length: 20, path: vec!["sample.txt".to_owned()]}], torr.files);
+	}
+
+	#[test]
+	fn infohash_1() {
+		assert_eq!(
+			infohash(),
+			"2aae6c35c94fcfb415dbe95f408b9ce91ee846ed".to_owned()
+		);
 	}
 }
